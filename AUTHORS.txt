@@ -1,4 +1,0 @@
-# This file lists all contributors to this repository
-
-Diana Wanjiru <@__>
-Daniel Muthama <@danielmuthama>

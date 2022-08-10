@@ -1,94 +1,92 @@
-#include "holberton.h"
+#include "shell.h"
 
 /**
- * envFunc - prints the environment
- * @build: input build
- * Return: Always 1
+ * _myenv - prints the current environment
+ * @info: Structure containing potential arguments. Used to maintain
+ *          constant function prototype.
+ * Return: Always 0
  */
-int envFunc(config *build)
+int _myenv(info_t *info)
 {
-	printList(build->env);
-	return (1);
+	print_list_str(info->env);
+	return (0);
 }
 
 /**
- * setenvFunc - adds env variable if it does not exist;
- * modify env variable if it does
- * @build: input build
- * Return: Always 1
+ * _getenv - gets the value of an environ variable
+ * @info: Structure containing potential arguments. Used to maintain
+ * @name: env var name
+ *
+ * Return: the value
  */
-int setenvFunc(config *build)
+char *_getenv(info_t *info, const char *name)
 {
-	register int index, len;
-	static char buffer[BUFSIZE];
+	list_t *node = info->env;
+	char *p;
 
-	if (countArgs(build->args) != 3)
+	while (node)
 	{
-		errno = EWSIZE;
-		errorHandler(build);
-		return (1);
+		p = starts_with(node->str, name);
+		if (p && *p)
+			return (p);
+		node = node->next;
 	}
-	len = _strlen(build->args[1]) + _strlen(build->args[2]) + 2;
-	_strcat(buffer, build->args[1]);
-	_strcat(buffer, "=");
-	_strcat(buffer, build->args[2]);
-	insertNullByte(buffer, len - 1);
-	index = searchNode(build->env, build->args[1]);
-	if (index == -1)
-	{
-		addNodeEnd(&build->env, buffer);
-		insertNullByte(buffer, 0);
-		return (1);
-	}
-	deleteNodeAtIndex(&build->env, index);
-	addNodeAtIndex(&build->env, index, buffer);
-	insertNullByte(buffer, 0);
-	return (1);
+	return (NULL);
 }
 
 /**
- * unsetenvFunc - deletes env variable if exists;
- * will only accept valid variables names
- * @build: input build
- * Return: Always 1
+ * _mysetenv - Initialize a new environment variable,
+ *             or modify an existing one
+ * @info: Structure containing potential arguments. Used to maintain
+ *        constant function prototype.
+ *  Return: Always 0
  */
-int unsetenvFunc(config *build)
+int _mysetenv(info_t *info)
 {
-	register int foundVar, i = 1;
-	_Bool foundMatch = false;
-
-	while (build->args[i])
+	if (info->argc != 3)
 	{
-		if (_isalpha(build->args[i][0]) || build->args[i][0] == '_')
-		{
-			foundVar = searchNode(build->env, build->args[i]);
-			if (foundVar > -1)
-			{
-				deleteNodeAtIndex(&build->env, foundVar);
-				foundMatch = true;
-			}
-		}
-		i++;
-	}
-	if (foundMatch == false)
-	{
-		errno = ENOSTRING;
-		errorHandler(build);
-	}
-	return (1);
-}
-
-/**
- * _isalpha - checks if c is an alphabetic character
- * @c: potential alphabetical value
- * Return: if c is a letter, returns 1. Otherwise, return 0.
- */
-int _isalpha(int c)
-{
-	if (c > 64 && c < 91)
+		_eputs("Incorrect number of arguements\n");
 		return (1);
-	else if (c > 96 && c < 123)
-		return (1);
-	else
+	}
+	if (_setenv(info, info->argv[1], info->argv[2]))
 		return (0);
+	return (1);
+}
+
+/**
+ * _myunsetenv - Remove an environment variable
+ * @info: Structure containing potential arguments. Used to maintain
+ *        constant function prototype.
+ *  Return: Always 0
+ */
+int _myunsetenv(info_t *info)
+{
+	int i;
+
+	if (info->argc == 1)
+	{
+		_eputs("Too few arguements.\n");
+		return (1);
+	}
+	for (i = 1; i <= info->argc; i++)
+		_unsetenv(info, info->argv[i]);
+
+	return (0);
+}
+
+/**
+ * populate_env_list - populates env linked list
+ * @info: Structure containing potential arguments. Used to maintain
+ *          constant function prototype.
+ * Return: Always 0
+ */
+int populate_env_list(info_t *info)
+{
+	list_t *node = NULL;
+	size_t i;
+
+	for (i = 0; environ[i]; i++)
+		add_node_end(&node, environ[i], 0);
+	info->env = node;
+	return (0);
 }
